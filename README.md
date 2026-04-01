@@ -10,8 +10,12 @@ Layer 1:
 
 2:1 MUX -> Yasmine
 
-Sign-extender -> Matthew
+Sign-extender / Imm-Gen -> Matthew
 
 Layer 2:
 
 Instruction MEM and Data MEM -> Aurelia
+
+Layer 3:
+
+Pipeline Registers -> Matthew
