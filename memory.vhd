@@ -1,5 +1,9 @@
 -- Added from P3
 --Adapted from Example 12-15 of Quartus Design and Synthesis handbook
+-- Changed the memory to take in 32-bit words instead of 8
+-- Changed the mem_delay to 1ns (synchronized with the clock period)
+-- When instantiation for instruction and data memories, override the RAM sizes
+-- following the specs
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 USE ieee.numeric_std.all;
@@ -7,22 +11,22 @@ USE ieee.numeric_std.all;
 ENTITY memory IS
 	GENERIC(
 		ram_size : INTEGER := 32768;
-		mem_delay : time := 10 ns;
+		mem_delay : time := 1 ns;
 		clock_period : time := 1 ns
 	);
 	PORT (
 		clock: IN STD_LOGIC;
-		writedata: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		writedata: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 		address: IN INTEGER RANGE 0 TO ram_size-1;
 		memwrite: IN STD_LOGIC;
 		memread: IN STD_LOGIC;
-		readdata: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+		readdata: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
 		waitrequest: OUT STD_LOGIC
 	);
 END memory;
 
 ARCHITECTURE rtl OF memory IS
-	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
+	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
 	SIGNAL ram_block: MEM;
 	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
 	SIGNAL write_waitreq_reg: STD_LOGIC := '1';
@@ -34,7 +38,7 @@ BEGIN
 		--This is a cheap trick to initialize the SRAM in simulation
 		IF(now < 1 ps)THEN
 			For i in 0 to ram_size-1 LOOP
-				ram_block(i) <= std_logic_vector(to_unsigned(i,8));
+				ram_block(i) <= std_logic_vector(to_unsigned(0, 32)); -- Initialize to 0
 			END LOOP;
 		end if;
 
