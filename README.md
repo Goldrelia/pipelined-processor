@@ -7,8 +7,11 @@
 We must work on different aspects of the layers of the architecture. 
 
 Layer 1:
+
 2:1 MUX -> Yasmine
+
 Sign-extender -> Matthew
 
 Layer 2:
+
 Instruction MEM and Data MEM -> Aurelia
