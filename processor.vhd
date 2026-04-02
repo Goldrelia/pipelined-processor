@@ -11,3 +11,4 @@ reg_file : register_file
         rd_data  => WB_data,
         rd_write => MEM_WB_RegWrite
     );
+
