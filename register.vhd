@@ -1,7 +1,7 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 
-entity register is
+entity reg is
     port(
         clk: in std_logic;
         reset: in std_logic;
@@ -13,9 +13,9 @@ entity register is
         --Outputs to EX stage
         data_out: out std_logic_vector(31 downto 0);
     );
-end register;
+end reg;
 
-architecture behavioural of register is
+architecture behavioural of reg is
     begin
         process(reset, clk)
             begin 
