@@ -7,7 +7,14 @@ entity control is
         opcode   : in std_logic_vector(6 downto 0);
         funct3   : in std_logic_vector(2 downto 0);
         funct7   : in std_logic_vector(6 downto 0);
-        alu_ctrl : out std_logic_vector(4 downto 0)
+        alu_ctrl : out std_logic_vector(4 downto 0);
+
+        memtoreg : out std_logic;
+        regwrite : out std_logic;
+        branch   : out std_logic;
+        memread  : out std_logic;
+        memwrite : out std_logic;
+        alu_src  : out std_logic
     );
 end entity;
 
@@ -16,10 +23,17 @@ begin
     process(opcode, funct3, funct7)
     begin
         alu_ctrl <= (others=>'0');
+        memtoreg <= '0';
+        regwrite <= '0';
+        branch   <= '0';
+        memread  <= '0';
+        memwrite <= '0';
+        alu_src  <= '0';
 
         case opcode is
             -- R-type
             when "0110011" =>
+                regwrite <= '1';
                 case funct3 is
                     when "000" => 
             		if funct7 = "0000000" then
@@ -41,6 +55,8 @@ begin
 
             -- I-type
             when "0010011" =>
+                regwrite <= '1';
+                alu_src  <= '1';
                 case funct3 is
                     when "000" => alu_ctrl <= "00000";   -- ADDI
                     when "100" => alu_ctrl <= "01111";   -- XORI
@@ -51,10 +67,22 @@ begin
                 end case;
 
             -- Load / Store
-            when "0000011" | "0100011" => alu_ctrl <= "01100"; -- LW/SW address calculation
+            when "0000011" => 
+                regwrite <= '1';
+                memread  <= '1';
+                alu_src  <= '1';
+                memtoreg <= '1';
+                alu_ctrl <= "01100"; -- LW/SW address calculation
+            
+            when "0100011" => 
+                memwrite <= '1';
+                alu_src  <= '1';
+                alu_ctrl <= "01100"; -- LW/SW address calculation
 
             -- Branches
-            when "1100011" => alu_ctrl <= "01101"; -- BEQ/BNE/BLT/BGE
+            when "1100011" => 
+                branch   <= '1';
+                alu_ctrl <= "01101"; -- BEQ/BNE/BLT/BGE
 
             -- JAL / JALR
             when "1101111" | "1100111" => alu_ctrl <= "01110";

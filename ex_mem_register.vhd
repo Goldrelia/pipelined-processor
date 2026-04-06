@@ -8,8 +8,8 @@ entity ex_mem_register is
         en: in std_logic;
 
         --Inputs from EX stage
-        branch_taken_in: in std_logic;
         alu_result_in: in std_logic_vector(31 downto 0);
+        alu_zero_in: in std_logic;
         rs2_in: in std_logic_vector(31 downto 0);
         ir_in: in std_logic_vector(31 downto 0);
         memtoreg_in_control: in std_logic;
@@ -20,9 +20,9 @@ entity ex_mem_register is
 
 
         --Outputs to MEM stage
-        branch_taken_out: out std_logic;
         ir_out: out std_logic_vector(31 downto 0);
         alu_result_out: out std_logic_vector(31 downto 0);
+        alu_zero_out: in std_logic;
         rs2_out: out std_logic_vector(31 downto 0);
         memtoreg_out_control: out std_logic;
         regwrite_out_control: out std_logic;
@@ -37,9 +37,9 @@ architecture behavioural of ex_mem_register is
         process(reset, clk)
             begin 
                 if reset = '1' THEN
-                    branch_taken_out <= '0';
                     ir_out <= (others => '0');
                     alu_result_out <= (others => '0');
+                    alu_result_out <= '0';
                     rs2_out <= (others => '0');
                     memtoreg_out_control <= '0';
                     regwrite_out_control <= '0';
@@ -49,8 +49,8 @@ architecture behavioural of ex_mem_register is
 
                 elsif rising_edge(clk) THEN
                     if en = '1' then
-                        branch_taken_out <= branch_taken_in;
                         alu_result_out <= alu_result_in;
+                        alu_zero_out <= alu_zero_in;
                         ir_out <= ir_in;
                         rs2_out <= rs2_in;
                         memtoreg_out_control <= memtoreg_in_control;
