@@ -13,8 +13,6 @@ end processor;
 architecture behavioral of processor is
 
     -- Signal declarations
-    signal branch_taken : std_logic;
-    signal branch_target : std_logic_vector(31 downto 0);
     -- For the PC
     signal PC          : std_logic_vector(31 downto 0) := (others => '0');
     signal PC_next     : std_logic_vector(31 downto 0);
@@ -47,12 +45,37 @@ architecture behavioral of processor is
     signal control_memtoreg : std_logic;
     signal control_regwrite : std_logic;
     signal control_branch   : std_logic;
+    signal control_branch_type : std_logic_vector(2 downto 0);
+    signal control_jal      : std_logic;
+    signal control_jalr     : std_logic;
     signal control_memread  : std_logic;
     signal control_memwrite : std_logic;
     signal control_alu_src  : std_logic;
     signal control_alu_op   : std_logic_vector(4 downto 0);
+
+    -- Pipeline control signals
+    signal control_branch_type_ex : std_logic_vector(2 downto 0);
+    signal control_jal_ex        : std_logic;
+    signal control_jalr_ex       : std_logic;
+    signal control_link_mem      : std_logic;
+    signal control_link_wb       : std_logic;
+
+    -- Branch/jump and PC target signals
+    signal branch_condition_ex : std_logic;
+    signal branch_taken_ex     : std_logic;
+    signal pc_taken_mem        : std_logic;
+    signal pc_target_ex        : std_logic_vector(31 downto 0);
+    signal pc_target_mem       : std_logic_vector(31 downto 0);
+    signal pc_plus4_mem        : std_logic_vector(31 downto 0);
+    signal pc_plus4_wb         : std_logic_vector(31 downto 0);
+    signal pc_base_ex          : std_logic_vector(31 downto 0);
+    signal jal_target_ex       : std_logic_vector(31 downto 0);
+    signal jalr_target_raw_ex  : std_logic_vector(31 downto 0);
+    signal jalr_target_ex      : std_logic_vector(31 downto 0);
+
     -- For the MUX in the execution phase
     signal alu_in_2 : std_logic_vector(31 downto 0);
+    signal alu_mem_wb : std_logic_vector(31 downto 0);
     -- For the ALU
     signal alu_result : std_logic_vector(31 downto 0);
     signal alu_zero   : std_logic;
@@ -80,8 +103,6 @@ architecture behavioral of processor is
     begin
 
         PC_next <= std_logic_vector(unsigned(PC) + 4);
-        branch_taken <= control_branch_ex and alu_zero;
-        branch_target <= std_logic_vector(unsigned(ID_EX_PC) + unsigned(immex_val(30 downto 0) & '0'));
 
         PC_reg: entity work.reg
             port map(
@@ -109,8 +130,8 @@ architecture behavioral of processor is
         mux: entity work.MUX_2_1
             port map(
                 A => PC_next,
-                B => alu_result_mem,
-                S => branch_taken,
+                B => pc_target_mem,
+                S => pc_taken_mem,
                 Y => mux_out
             );
         
@@ -147,13 +168,16 @@ architecture behavioral of processor is
                 opcode => IF_ID_IR(6 downto 0),
                 funct3 => IF_ID_IR(14 downto 12),
                 funct7 => IF_ID_IR(31 downto 25),
+                alu_ctrl    => control_alu_op,
                 memtoreg    => control_memtoreg,
                 regwrite    => control_regwrite,
                 branch      => control_branch,
+                branch_type => control_branch_type,
+                jal         => control_jal,
+                jalr        => control_jalr,
                 memread     => control_memread,
                 memwrite    => control_memwrite,
-                alu_src     => control_alu_src,
-                alu_op      => control_alu_op 
+                alu_src     => control_alu_src
             );
 
         id_ex_register: entity work.id_ex_register
@@ -177,6 +201,9 @@ architecture behavioral of processor is
                 memtoreg_in_control => control_memtoreg,
                 regwrite_in_control => control_regwrite,
                 branch_in_control => control_branch,
+                branch_type_in_control => control_branch_type,
+                jal_in_control => control_jal,
+                jalr_in_control => control_jalr,
                 memread_in_control => control_memread,
                 memwrite_in_control => control_memwrite,
                 alu_src_in_control => control_alu_src,
@@ -185,6 +212,9 @@ architecture behavioral of processor is
                 memtoreg_out_control => control_memtoreg_ex,
                 regwrite_out_control => control_regwrite_ex,
                 branch_out_control => control_branch_ex,
+                branch_type_out_control => control_branch_type_ex,
+                jal_out_control => control_jal_ex,
+                jalr_out_control => control_jalr_ex,
                 memread_out_control => control_memread_ex,
                 memwrite_out_control => control_memwrite_ex,
                 alu_src_out_control => control_alu_src_ex,
@@ -209,6 +239,22 @@ architecture behavioral of processor is
                 zero => alu_zero
             );
 
+        -- Branch/jump target and condition calculations in EX stage
+        pc_base_ex <= std_logic_vector(signed(ID_EX_PC) - 4);
+        branch_condition_ex <=
+            '1' when control_branch_type_ex = "000" and register1ex_out = register2ex_out else
+            '1' when control_branch_type_ex = "001" and register1ex_out /= register2ex_out else
+            '1' when control_branch_type_ex = "100" and signed(register1ex_out) < signed(register2ex_out) else
+            '1' when control_branch_type_ex = "101" and signed(register1ex_out) >= signed(register2ex_out) else
+            '0';
+        branch_taken_ex <= (control_branch_ex and branch_condition_ex) or control_jal_ex or control_jalr_ex;
+        jal_target_ex <= std_logic_vector(signed(pc_base_ex) + signed(immex_val));
+        jalr_target_raw_ex <= std_logic_vector(signed(register1ex_out) + signed(immex_val));
+        jalr_target_ex <= jalr_target_raw_ex(31 downto 1) & '0';
+        pc_target_ex <= jal_target_ex when control_jal_ex = '1' else
+                        jalr_target_ex when control_jalr_ex = '1' else
+                        std_logic_vector(signed(pc_base_ex) + signed(immex_val));
+
         ex_mem_register: entity work.ex_mem_register
             port map(
                 clk => clk,
@@ -218,6 +264,10 @@ architecture behavioral of processor is
                 alu_zero_in => alu_zero,
                 rs2_in => register2ex_out,
                 ir_in => ID_EX_IR,
+                pc_in => ID_EX_PC,
+                pc_target_in => pc_target_ex,
+                pc_taken_in => branch_taken_ex,
+                link_in_control => control_jal_ex or control_jalr_ex,
                 memtoreg_in_control => control_memtoreg_ex,
                 regwrite_in_control => control_regwrite_ex,
                 branch_in_control => control_branch_ex,
@@ -227,6 +277,10 @@ architecture behavioral of processor is
                 alu_result_out => alu_result_mem,
                 alu_zero_out => alu_zero_mem,
                 rs2_out => rs2_out_mem,
+                pc_out => pc_plus4_mem,
+                pc_target_out => pc_target_mem,
+                pc_taken_out => pc_taken_mem,
+                link_out_control => control_link_mem,
                 memtoreg_out_control => control_memtoreg_mem,
                 regwrite_out_control => control_regwrite_mem,
                 branch_out_control => control_branch_mem,
@@ -255,21 +309,33 @@ architecture behavioral of processor is
                 en => '1',
                 data_in => data_mem_read,
                 alu_result_in => alu_result_mem,
+                pc_in => pc_plus4_mem,
                 ir_in => ID_MEM_IR,
+                link_in_control => control_link_mem,
                 memtoreg_in_control => control_memtoreg_mem,
                 regwrite_in_control => control_regwrite_mem,
                 data_out => write_data,
                 alu_result_out => alu_result_wb,
+                pc_out => pc_plus4_wb,
                 ir_out => ID_WB_IR,
+                link_out_control => control_link_wb,
                 memtoreg_out_control => control_memtoreg_wb,
                 regwrite_out_control => control_regwrite_wb
             );
 
-        wb_mux: entity work.MUX_2_1
+        wb_mux0: entity work.MUX_2_1
             port map(
-                A => write_data,
-                B => branch_target,
+                A => alu_result_wb,
+                B => write_data,
                 S => control_memtoreg_wb,
+                Y => alu_mem_wb
+            );
+
+        wb_mux1: entity work.MUX_2_1
+            port map(
+                A => alu_mem_wb,
+                B => pc_plus4_wb,
+                S => control_link_wb,
                 Y => wb_data
             );
 

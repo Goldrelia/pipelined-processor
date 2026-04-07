@@ -12,6 +12,9 @@ entity control is
         memtoreg : out std_logic;
         regwrite : out std_logic;
         branch   : out std_logic;
+        branch_type : out std_logic_vector(2 downto 0);
+        jal      : out std_logic;
+        jalr     : out std_logic;
         memread  : out std_logic;
         memwrite : out std_logic;
         alu_src  : out std_logic
@@ -26,6 +29,9 @@ begin
         memtoreg <= '0';
         regwrite <= '0';
         branch   <= '0';
+        branch_type <= (others => '0');
+        jal      <= '0';
+        jalr     <= '0';
         memread  <= '0';
         memwrite <= '0';
         alu_src  <= '0';
@@ -82,14 +88,27 @@ begin
             -- Branches
             when "1100011" => 
                 branch   <= '1';
+                branch_type <= funct3;
                 alu_ctrl <= "01101"; -- BEQ/BNE/BLT/BGE
 
             -- JAL / JALR
-            when "1101111" | "1100111" => alu_ctrl <= "01110";
+            when "1101111" =>
+                regwrite <= '1';
+                jal <= '1';
+                alu_ctrl <= "01110";
+            when "1100111" =>
+                regwrite <= '1';
+                jalr <= '1';
+                alu_src <= '1';
+                alu_ctrl <= "01110";
 
             -- LUI / AUIPC
-            when "0110111" => alu_ctrl <= "01010"; -- LUI
-            when "0010111" => alu_ctrl <= "01011"; -- AUIPC
+            when "0110111" =>
+                regwrite <= '1';
+                alu_ctrl <= "01010"; -- LUI
+            when "0010111" =>
+                regwrite <= '1';
+                alu_ctrl <= "01011"; -- AUIPC
 
             when others => alu_ctrl <= (others=>'0');
         end case;

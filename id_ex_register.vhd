@@ -17,6 +17,9 @@ entity id_ex_register is
         memtoreg_in_control: in std_logic;
         regwrite_in_control: in std_logic;
         branch_in_control: in std_logic;
+        branch_type_in_control: in std_logic_vector(2 downto 0);
+        jal_in_control: in std_logic;
+        jalr_in_control: in std_logic;
         memread_in_control: in std_logic;
         memwrite_in_control: in std_logic;
         alu_src_in_control: in std_logic;
@@ -32,6 +35,9 @@ entity id_ex_register is
         memtoreg_out_control: out std_logic;
         regwrite_out_control: out std_logic;
         branch_out_control: out std_logic;
+        branch_type_out_control: out std_logic_vector(2 downto 0);
+        jal_out_control: out std_logic;
+        jalr_out_control: out std_logic;
         memread_out_control: out std_logic;
         memwrite_out_control: out std_logic;
         alu_src_out_control: out std_logic;
@@ -71,6 +77,9 @@ architecture behavioural of id_ex_register is
                         memwrite_out_control <= memwrite_in_control;
                         alu_src_out_control <= alu_src_in_control;
                         alu_op_out_control <= alu_op_in_control;
+                        branch_type_out_control <= branch_type_in_control;
+                        jal_out_control <= jal_in_control;
+                        jalr_out_control <= jalr_in_control;
                     end if;
                 end if;
         end process;

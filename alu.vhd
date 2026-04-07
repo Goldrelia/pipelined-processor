@@ -74,16 +74,6 @@ begin
             when "01100" => rd <= std_logic_vector(rs1_signed + rs2_signed_or_imm);       -- LW / SW (address calculation)
 
             -- =======================
-            -- Branches: BEQ/BNE/BLT/BGE
-            -- =======================
-            when "01101" => rd <= std_logic_vector(rs1_signed - rs2_signed_or_imm);       -- ALU computes A-B for branch
-
-            -- =======================
-            -- Jumps
-            -- =======================
-            when "01110" => rd <= A;                                                       -- JAL / JALR
-
-            -- =======================
             -- XOR
             -- =======================
             when "01111" => rd <= A xor B;                                                 -- XOR / XORI
