@@ -19,9 +19,10 @@ vcom -work work imm_gen.vhd
 vcom -work work mem_wb_register.vhd
 vcom -work work memory.vhd
 vcom -work work mux_2_1.vhd
-vcom -work work processor.vhd
-vcom -work work reg.vhd
+vcom -work work MUX_2_1_32bit.vhd
+vcom -work work register.vhd
 vcom -work work register_file.vhd
+vcom -work work processor.vhd
 
 # Start simulation
 vsim -c work.processor
@@ -32,8 +33,7 @@ vsim -c work.processor
 # Run for 10,000 cycles (at 1 GHz, but simulator time is arbitrary)
 run 10000 ns
 
-# Write outputs (this is pseudo-code; actual implementation depends on simulator)
-# In a real testbench, you'd have VHDL code to write files after simulation
-# For now, manually check register file and memory after run
+# Source the dump script to write output files
+source dump_output.tcl
 
 quit -sim

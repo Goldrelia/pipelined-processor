@@ -17,7 +17,7 @@ architecture behavioral of processor is
     signal PC          : std_logic_vector(31 downto 0) := (others => '0');
     signal PC_next     : std_logic_vector(31 downto 0);
     -- For the instruction memory
-    signal instruction : std_logic_vector(31 downto 0);
+    signal instruction : std_logic_vector(31 downto 0) := (others => '0');
     -- For the IF/ID register
     signal IF_ID_PC    : std_logic_vector(31 downto 0);
     signal IF_ID_IR    : std_logic_vector(31 downto 0);
@@ -73,14 +73,24 @@ architecture behavioral of processor is
     signal jalr_target_raw_ex  : std_logic_vector(31 downto 0);
     signal jalr_target_ex      : std_logic_vector(31 downto 0);
 
+    -- Jump-link logic
+    signal link_ex             : std_logic;
+
     -- For the MUX in the execution phase
     signal alu_in_2 : std_logic_vector(31 downto 0);
     signal alu_mem_wb : std_logic_vector(31 downto 0);
+
+    -- Address signals (to avoid dynamic expressions)
+    signal instr_addr : integer := 0;
+    signal data_addr : integer := 0;
+    signal rs1_addr : integer := 0;
+    signal rs2_addr : integer := 0;
+    signal rd_addr : integer := 0;
     -- For the ALU
     signal alu_result : std_logic_vector(31 downto 0);
     signal alu_zero   : std_logic;
     -- For the ex_mem register
-    signal alu_result_mem : std_logic_vector(31 downto 0);
+    signal alu_result_mem : std_logic_vector(31 downto 0) := (others => '0');
     signal alu_zero_mem: std_logic;
     signal rs2_out_mem: std_logic_vector(31 downto 0);
     signal control_memtoreg_mem : std_logic;
@@ -113,13 +123,16 @@ architecture behavioral of processor is
                 data_out => PC
             );
 
+        -- Compute instruction address
+        instr_addr <= to_integer(unsigned(PC))/4;
+
         instruction_mem: entity work.memory
             generic map(
                 ram_size => 1024
             )
             port map(
                 clock       => clk,
-                address     => to_integer(unsigned(PC))/4,
+                address     => instr_addr,
                 memread     => '1',
                 memwrite    => '0',
                 writedata   => (others => '0'),
@@ -127,7 +140,7 @@ architecture behavioral of processor is
                 waitrequest => open
             );
 
-        mux: entity work.MUX_2_1
+        mux: entity work.MUX_2_1_32bit
             port map(
                 A => PC_next,
                 B => pc_target_mem,
@@ -146,12 +159,17 @@ architecture behavioral of processor is
                 ir_out => IF_ID_IR
             );
 
+        -- Compute register file addresses
+        rs1_addr <= to_integer(unsigned(IF_ID_IR(19 downto 15)));
+        rs2_addr <= to_integer(unsigned(IF_ID_IR(24 downto 20)));
+        rd_addr <= to_integer(unsigned(ID_WB_IR(11 downto 7)));
+
         register_file: entity work.register_file
             port map(
                 clock => clk,
-                rs1_addr => to_integer(unsigned(IF_ID_IR(19 downto 15))),
-                rs2_addr => to_integer(unsigned(IF_ID_IR(24 downto 20))),
-                rd_addr => to_integer(unsigned(ID_WB_IR(11 downto 7))),
+                rs1_addr => rs1_addr,
+                rs2_addr => rs2_addr,
+                rd_addr => rd_addr,
                 rd_data => wb_data, 
                 rd_write => control_regwrite_wb,
                 rs1_data => reg1_out,
@@ -160,7 +178,7 @@ architecture behavioral of processor is
 
         sign_extender: entity work.imm_gen
             port map(
-                instruction => to_integer(unsigned(IF_ID_IR(31 downto 20))),
+                instruction => IF_ID_IR,
                 imm_out => imm_value
             );
         control_unit: entity work.control
@@ -222,7 +240,7 @@ architecture behavioral of processor is
             );
         
         -- Fowrwarding is not required for full marks, implement only 1 MUX
-        mux_ex: entity work.MUX_2_1
+        mux_ex: entity work.MUX_2_1_32bit
             port map(
                 A => register2ex_out,
                 B => immex_val,
@@ -248,6 +266,7 @@ architecture behavioral of processor is
             '1' when control_branch_type_ex = "101" and signed(register1ex_out) >= signed(register2ex_out) else
             '0';
         branch_taken_ex <= (control_branch_ex and branch_condition_ex) or control_jal_ex or control_jalr_ex;
+        link_ex <= control_jal_ex or control_jalr_ex;
         jal_target_ex <= std_logic_vector(signed(pc_base_ex) + signed(immex_val));
         jalr_target_raw_ex <= std_logic_vector(signed(register1ex_out) + signed(immex_val));
         jalr_target_ex <= jalr_target_raw_ex(31 downto 1) & '0';
@@ -267,7 +286,7 @@ architecture behavioral of processor is
                 pc_in => ID_EX_PC,
                 pc_target_in => pc_target_ex,
                 pc_taken_in => branch_taken_ex,
-                link_in_control => control_jal_ex or control_jalr_ex,
+                link_in_control => link_ex,
                 memtoreg_in_control => control_memtoreg_ex,
                 regwrite_in_control => control_regwrite_ex,
                 branch_in_control => control_branch_ex,
@@ -288,13 +307,16 @@ architecture behavioral of processor is
                 memwrite_out_control => control_memwrite_mem
             );
 
+        -- Compute data address
+        data_addr <= to_integer(unsigned(alu_result_mem))/4;
+
         data_mem: entity work.memory
             generic map(
                 ram_size => 8192
             )
             port map(
                 clock       => clk,
-                address     => to_integer(unsigned(alu_result_mem))/4,
+                address     => data_addr,
                 memread     => control_memread_mem,
                 memwrite    => control_memwrite_mem,
                 writedata   => rs2_out_mem,
@@ -323,7 +345,7 @@ architecture behavioral of processor is
                 regwrite_out_control => control_regwrite_wb
             );
 
-        wb_mux0: entity work.MUX_2_1
+        wb_mux0: entity work.MUX_2_1_32bit
             port map(
                 A => alu_result_wb,
                 B => write_data,
@@ -331,7 +353,7 @@ architecture behavioral of processor is
                 Y => alu_mem_wb
             );
 
-        wb_mux1: entity work.MUX_2_1
+        wb_mux1: entity work.MUX_2_1_32bit
             port map(
                 A => alu_mem_wb,
                 B => pc_plus4_wb,

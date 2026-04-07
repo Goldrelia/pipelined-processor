@@ -18,13 +18,13 @@ begin
             -- I-type: ALU immediates, LW, JALR
             when "0010011" | "0000011" | "1100111" =>
                 imm_out(31 downto 12)<=(others=>instruction(31)); --sign extend
-                imm_out(11 downto 0)<=(others=>instruction(31 downto 20));
+                imm_out(11 downto 0)<=instruction(31 downto 20);
             
             -- S-type: SW
             when "0100011" =>
                 imm_out(31 downto 12)<=(others=>instruction(31)); --sign extend
-                imm_out(11 downto 5)<=(others=>instruction(31 downto 25));
-                imm_out(4 downto 0)<=(others=>instruction(11 downto 7));
+                imm_out(11 downto 5)<=instruction(31 downto 25);
+                imm_out(4 downto 0)<=instruction(11 downto 7);
 
             -- B-type: Branch instructions
             when "1100011" =>
