@@ -22,6 +22,8 @@ Register file -> Aurelia
 
 Instruction MEM and Data MEM -> Yasmine
 
+ALU and Control Unit --> Tayba
+
 Layer 3:
 
 Pipeline Registers -> Matthew
