@@ -267,8 +267,8 @@ architecture behavioral of processor is
 
         wb_mux: entity work.MUX_2_1
             port map(
-                A => write_data,
-                B => branch_target,
+                A => write_data, --this maybe should be: alu_result_wb
+                B => branch_target, --this maybe should be: write_data 
                 S => control_memtoreg_wb,
                 Y => wb_data
             );
