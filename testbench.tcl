@@ -43,7 +43,7 @@ run 10ns
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
-source load_program.do
+source load_program.tcl
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
