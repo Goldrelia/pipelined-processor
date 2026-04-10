@@ -12,18 +12,25 @@ entity ex_mem_register is
         alu_zero_in: in std_logic;
         rs2_in: in std_logic_vector(31 downto 0);
         ir_in: in std_logic_vector(31 downto 0);
+        pc_in: in std_logic_vector(31 downto 0);
+        pc_target_in: in std_logic_vector(31 downto 0);
+        pc_taken_in: in std_logic;
+        link_in_control: in std_logic;
         memtoreg_in_control: in std_logic;
         regwrite_in_control: in std_logic;
         branch_in_control: in std_logic;
         memread_in_control: in std_logic;
         memwrite_in_control: in std_logic;
 
-
         --Outputs to MEM stage
         ir_out: out std_logic_vector(31 downto 0);
         alu_result_out: out std_logic_vector(31 downto 0);
-        alu_zero_out: in std_logic;
+        alu_zero_out: out std_logic;
         rs2_out: out std_logic_vector(31 downto 0);
+        pc_out: out std_logic_vector(31 downto 0);
+        pc_target_out: out std_logic_vector(31 downto 0);
+        pc_taken_out: out std_logic;
+        link_out_control: out std_logic;
         memtoreg_out_control: out std_logic;
         regwrite_out_control: out std_logic;
         branch_out_control: out std_logic;
@@ -39,8 +46,12 @@ architecture behavioural of ex_mem_register is
                 if reset = '1' THEN
                     ir_out <= (others => '0');
                     alu_result_out <= (others => '0');
-                    alu_result_out <= '0';
+                    alu_zero_out <= '0';
                     rs2_out <= (others => '0');
+                    pc_out <= (others => '0');
+                    pc_target_out <= (others => '0');
+                    pc_taken_out <= '0';
+                    link_out_control <= '0';
                     memtoreg_out_control <= '0';
                     regwrite_out_control <= '0';
                     branch_out_control <= '0';
@@ -53,6 +64,10 @@ architecture behavioural of ex_mem_register is
                         alu_zero_out <= alu_zero_in;
                         ir_out <= ir_in;
                         rs2_out <= rs2_in;
+                        pc_out <= pc_in;
+                        pc_target_out <= pc_target_in;
+                        pc_taken_out <= pc_taken_in;
+                        link_out_control <= link_in_control;
                         memtoreg_out_control <= memtoreg_in_control;
                         regwrite_out_control <= regwrite_in_control;
                         branch_out_control <= branch_in_control;

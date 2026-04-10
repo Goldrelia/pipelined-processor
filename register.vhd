@@ -11,7 +11,7 @@ entity reg is
         data_in: in std_logic_vector(31 downto 0);
 
         --Outputs to EX stage
-        data_out: out std_logic_vector(31 downto 0);
+        data_out: out std_logic_vector(31 downto 0)
     );
 end reg;
 

@@ -15,7 +15,6 @@ end entity;
 architecture behavioral of alu is
 
     signal rd : std_logic_vector(31 downto 0);       -- ALU output
-    signal mul_result : signed(63 downto 0);         -- temporary for multiplication
 
 begin
 
@@ -26,6 +25,7 @@ begin
         variable rs1_unsigned         : unsigned(31 downto 0);
         variable rs2_unsigned_or_imm  : unsigned(31 downto 0);
         variable shift_amount         : integer range 0 to 31;
+        variable mul_result           : signed(63 downto 0);         -- temporary for multiplication
     begin
         -- Convert inputs to signed and unsigned
         rs1_signed          := signed(A);
@@ -72,16 +72,6 @@ begin
             -- Load / Store addresses
             -- =======================
             when "01100" => rd <= std_logic_vector(rs1_signed + rs2_signed_or_imm);       -- LW / SW (address calculation)
-
-            -- =======================
-            -- Branches: BEQ/BNE/BLT/BGE
-            -- =======================
-            when "01101" => rd <= std_logic_vector(rs1_signed - rs2_signed_or_imm);       -- ALU computes A-B for branch
-
-            -- =======================
-            -- Jumps
-            -- =======================
-            when "01110" => rd <= A;                                                       -- JAL / JALR
 
             -- =======================
             -- XOR
