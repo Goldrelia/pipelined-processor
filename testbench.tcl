@@ -32,7 +32,13 @@ vcom -work work processor.vhd
 puts "✓ Compilation complete\n"
 
 puts "Starting simulation..."
+# vsim -c work.processor
+# changed 
+# TODO: check if good
 vsim -c work.processor
+force /processor/reset 1 0ns, 0 5ns
+force /processor/clk 0 0ns, 1 0.5ns -repeat 1ns
+run 10ns
 
 puts "✓ Simulation started\n"
 
