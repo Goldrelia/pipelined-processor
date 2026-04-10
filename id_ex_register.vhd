@@ -62,6 +62,9 @@ architecture behavioural of id_ex_register is
                     memwrite_out_control <= '0';
                     alu_src_out_control <= '0';
                     alu_op_out_control <= (others => '0');
+                    branch_type_out_control <= (others => '0');
+                    jal_out_control <= '0';
+                    jalr_out_control <= '0';
 
                 elsif rising_edge(clk) THEN
                     if en = '1' then
