@@ -139,7 +139,7 @@ architecture behavioral of processor is
 
         sign_extender: entity work.imm_gen
             port map(
-                instruction => to_integer(unsigned(IF_ID_IR(31 downto 20))),
+                instruction => IF_ID_IR,
                 imm_out => imm_value
             );
         control_unit: entity work.control
