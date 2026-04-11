@@ -11,6 +11,7 @@ end imm_gen;
 architecture behaviour of imm_gen is
     signal opcode: std_logic_vector(6 downto 0);
 begin
+    opcode <= instruction(6 downto 0);
     process(instruction,opcode)
     begin
         imm_out<=(others=>'0');
