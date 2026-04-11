@@ -32,12 +32,18 @@ vcom -work work processor.vhd
 puts "✓ Compilation complete\n"
 
 puts "Starting simulation..."
+# vsim -c work.processor
+# changed 
+# TODO: check if good
 vsim -c work.processor
+force /processor/reset 1 0ns, 0 5ns
+force /processor/clk 0 0ns, 1 0.5ns -repeat 1ns
+run 10ns
 
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
-source load_program.do
+source load_program.tcl
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
