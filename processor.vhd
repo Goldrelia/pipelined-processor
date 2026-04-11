@@ -109,6 +109,11 @@ architecture behavioral of processor is
     signal control_regwrite_wb : std_logic;
     -- For the wb_mux
     signal wb_data : std_logic_vector(31 downto 0);
+    -- For the control hazard
+    signal pc_write_en : std_logic;
+    signal if_id_write_en : std_logic;
+    signal hazard_mux : std_logic;
+    -- for the hazard mux output
 
     begin
 
@@ -118,7 +123,7 @@ architecture behavioral of processor is
             port map(
                 clk      => clk,
                 reset    => reset,
-                en       => '1',
+                en       => pc_write_en,
                 data_in  => mux_out,
                 data_out => PC
             );
@@ -151,8 +156,8 @@ architecture behavioral of processor is
         if_id_reg: entity work.if_id_register
             port map(
                 clk    => clk,
-                reset  => reset,
-                en     => '1',
+                reset  => '1' when branch_taken_ex = '1' else reset,
+                en     => if_id_write_en,
                 pc_in  => PC_next,   -- PC+4 goes into IF/ID
                 ir_in  => instruction,
                 pc_out => IF_ID_PC,
@@ -201,7 +206,7 @@ architecture behavioral of processor is
         id_ex_register: entity work.id_ex_register
             port map(
                 clk => clk,
-                reset =>reset,
+                reset => '1' when branch_taken_ex = '1' else reset,
                 en => '1',
                 -- Input ports
                 pc_in => IF_ID_PC,
@@ -216,16 +221,16 @@ architecture behavioral of processor is
                 rs2_out => register2ex_out,
                 ir_out_ext => immex_val,
                 -- Input control signals
-                memtoreg_in_control => control_memtoreg,
-                regwrite_in_control => control_regwrite,
-                branch_in_control => control_branch,
-                branch_type_in_control => control_branch_type,
-                jal_in_control => control_jal,
-                jalr_in_control => control_jalr,
-                memread_in_control => control_memread,
-                memwrite_in_control => control_memwrite,
-                alu_src_in_control => control_alu_src,
-                alu_op_in_control => control_alu_op,
+                memtoreg_in_control => '0' when hazard_mux = '1' else control_memtoreg,
+                regwrite_in_control => '0' when hazard_mux = '1' else control_regwrite,
+                branch_in_control => '0' when hazard_mux = '1' else control_branch,
+                branch_type_in_control => "000" when hazard_mux = '1' else control_branch_type,
+                jal_in_control => '0' when hazard_mux = '1' else control_jal,
+                jalr_in_control => '0' when hazard_mux = '1' else control_jalr,
+                memread_in_control => '0' when hazard_mux = '1' else control_memread,
+                memwrite_in_control => '0' when hazard_mux = '1' else control_memwrite,
+                alu_src_in_control => '0' when hazard_mux = '1' else control_alu_src,
+                alu_op_in_control => "00000" when hazard_mux = '1' else control_alu_op,
                 -- Output control signals
                 memtoreg_out_control => control_memtoreg_ex,
                 regwrite_out_control => control_regwrite_ex,
@@ -239,7 +244,7 @@ architecture behavioral of processor is
                 alu_op_out_control => control_alu_op_ex
             );
         
-        -- Fowrwarding is not required for full marks, implement only 1 MUX
+        -- Forwarding is not required for full marks, implement only 1 MUX
         mux_ex: entity work.MUX_2_1_32bit
             port map(
                 A => register2ex_out,
@@ -359,6 +364,17 @@ architecture behavioral of processor is
                 B => pc_plus4_wb,
                 S => control_link_wb,
                 Y => wb_data
+            );
+        -- The hazard detection control
+        hazard_control: entity work.control_hazard
+            port map(
+                decode_inst_reg1 => IF_ID_IR(19 downto 15),
+                decode_inst_reg2 => IF_ID_IR(24 downto 20),
+                ex_inst_dest     => ID_EX_IR(11 downto 7),
+                ex_mem_read      => control_memread_ex,
+                pc_write         => pc_write_en,
+                if_id_write      => if_id_write_en,
+                hazard_out       => hazard_mux
             );
 
 end behavioral;
