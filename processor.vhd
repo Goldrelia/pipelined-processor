@@ -371,7 +371,9 @@ architecture behavioral of processor is
                 decode_inst_reg1 => IF_ID_IR(19 downto 15),
                 decode_inst_reg2 => IF_ID_IR(24 downto 20),
                 ex_inst_dest     => ID_EX_IR(11 downto 7),
-                ex_mem_read      => control_memread_ex,
+                ex_regwrite      => control_regwrite_ex,      
+                mem_inst_dest    => ID_MEM_IR(11 downto 7),  
+                mem_regwrite     => control_regwrite_mem,      
                 pc_write         => pc_write_en,
                 if_id_write      => if_id_write_en,
                 hazard_out       => hazard_mux
