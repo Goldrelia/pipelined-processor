@@ -17,7 +17,8 @@ entity control is
         jalr     : out std_logic;
         memread  : out std_logic;
         memwrite : out std_logic;
-        alu_src  : out std_logic
+        alu_src  : out std_logic;
+        auipc    : out std_logic
     );
 end entity;
 
@@ -35,6 +36,7 @@ begin
         memread  <= '0';
         memwrite <= '0';
         alu_src  <= '0';
+        auipc <= '0';
 
         case opcode is
             -- R-type
@@ -91,16 +93,18 @@ begin
                 branch_type <= funct3;
                 alu_ctrl <= "01101"; -- BEQ/BNE/BLT/BGE
 
-            -- JAL / JALR
-            when "1101111" =>
+            -- JAL
+            when "1101111" => 
                 regwrite <= '1';
-                jal <= '1';
-                alu_ctrl <= "01110";
-            when "1100111" =>
+                jal     <= '1';
+                
+            -- JALR
+            when "1100111" => 
                 regwrite <= '1';
-                jalr <= '1';
-                alu_src <= '1';
-                alu_ctrl <= "01110";
+                jal     <= '1';
+                jalr     <= '1';
+                alu_src  <= '1';
+                alu_ctrl <= "00000"; -- Force ALU to ADD (rs1 + imm)
 
             -- LUI / AUIPC
             when "0110111" =>
@@ -108,6 +112,7 @@ begin
                 alu_ctrl <= "01010"; -- LUI
             when "0010111" =>
                 regwrite <= '1';
+                auipc <= '1';
                 alu_ctrl <= "01011"; -- AUIPC
 
             when others => alu_ctrl <= (others=>'0');

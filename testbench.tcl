@@ -13,21 +13,22 @@ vmap work work
 puts "\nCompiling VHDL files..."
 
 # Compile in dependency order
-vcom -work work adder.vhd
-vcom -work work alu.vhd
-vcom -work work control.vhd
-vcom -work work generic_register.vhd
-vcom -work work register.vhd
-vcom -work work memory.vhd
-vcom -work work MUX_2_1.vhd
-vcom -work work MUX_2_1_32bit.vhd
-vcom -work work register_file.vhd
-vcom -work work imm_gen.vhd
-vcom -work work if_id_register.vhd
-vcom -work work id_ex_register.vhd
-vcom -work work ex_mem_register.vhd
-vcom -work work mem_wb_register.vhd
-vcom -work work processor.vhd
+vcom -2008 -work work adder.vhd
+vcom -2008 -work work alu.vhd
+vcom -2008 -work work control.vhd
+vcom -2008 -work work generic_register.vhd
+vcom -2008 -work work register.vhd
+vcom -2008 -work work memory.vhd
+vcom -2008 -work work MUX_2_1.vhd
+vcom -2008 -work work MUX_2_1_32bit.vhd
+vcom -2008 -work work register_file.vhd
+vcom -2008 -work work imm_gen.vhd
+vcom -2008 -work work if_id_register.vhd
+vcom -2008 -work work id_ex_register.vhd
+vcom -2008 -work work ex_mem_register.vhd
+vcom -2008 -work work mem_wb_register.vhd
+vcom -2008 -work work control_hazard.vhd
+vcom -2008 -work work processor.vhd
 
 puts "✓ Compilation complete\n"
 
@@ -43,7 +44,7 @@ run 10ns
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
-source load_program.do
+source load_program.tcl
 
 puts "Running for 10,000 cycles..."
 run 10000 ns

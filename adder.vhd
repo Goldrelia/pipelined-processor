@@ -1,17 +1,18 @@
-LIBRARY ieee;                                               
-USE ieee.std_logic_1164.all; 
+-- Not used? Use the MUX_2_1_32bit and compute additions inline with std_logic_vector(unsigned(PC) + 4)
+-- LIBRARY ieee;                                               
+-- USE ieee.std_logic_1164.all; 
 
-USE ieee.numeric_std.all;                               
-
-
-entity adder is
-	Port(	A: in std_logic_vector(31 downto 0);
-			B: in std_logic_vector(31 downto 0);
-			Y: out std_logic_vector(31 downto 0));
-end adder;
+-- USE ieee.numeric_std.all;                               
 
 
-architecture adder_behavioral of adder is
-	BEGIN
-		Y <= 	std_logic_vector(unsigned(A) + unsigned(B));
-END adder_behavioral;
+-- entity adder is
+-- 	Port(	A: in std_logic_vector(31 downto 0);
+-- 			B: in std_logic_vector(31 downto 0);
+-- 			Y: out std_logic_vector(31 downto 0));
+-- end adder;
+
+
+-- architecture adder_behavioral of adder is
+-- 	BEGIN
+-- 		Y <= 	std_logic_vector(unsigned(A) + unsigned(B));
+-- END adder_behavioral;
