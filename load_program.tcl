@@ -11,7 +11,7 @@ proc load_program {} {
     while {[gets $f line] >= 0} {
         if {$line != ""} {
             # Convert binary string to forces into memory
-            force /testbench/dut/instruction_mem/ram_block($addr) $line
+            force /processor/instruction_mem/ram_block($addr) $line
             # Note: Need to figure out correct path to instruction memory
             
             if {$addr < 20} {

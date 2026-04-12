@@ -17,7 +17,8 @@ entity control is
         jalr     : out std_logic;
         memread  : out std_logic;
         memwrite : out std_logic;
-        alu_src  : out std_logic
+        alu_src  : out std_logic;
+        auipc    : out std_logic
     );
 end entity;
 
@@ -35,6 +36,7 @@ begin
         memread  <= '0';
         memwrite <= '0';
         alu_src  <= '0';
+        auipc <= '0';
 
         case opcode is
             -- R-type
@@ -110,6 +112,7 @@ begin
                 alu_ctrl <= "01010"; -- LUI
             when "0010111" =>
                 regwrite <= '1';
+                auipc <= '1';
                 alu_ctrl <= "01011"; -- AUIPC
 
             when others => alu_ctrl <= (others=>'0');

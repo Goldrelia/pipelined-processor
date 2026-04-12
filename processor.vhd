@@ -115,6 +115,11 @@ architecture behavioral of processor is
     signal hazard_mux : std_logic;
     -- for the hazard mux output
 
+    -- AUIPC
+    signal control_auipc    : std_logic;
+    signal control_auipc_ex : std_logic;
+    signal alu_in_1         : std_logic_vector(31 downto 0);
+
     begin
 
         PC_next <= std_logic_vector(unsigned(PC) + 4);
@@ -200,7 +205,8 @@ architecture behavioral of processor is
                 jalr        => control_jalr,
                 memread     => control_memread,
                 memwrite    => control_memwrite,
-                alu_src     => control_alu_src
+                alu_src     => control_alu_src,
+                auipc => control_auipc
             );
 
         id_ex_register: entity work.id_ex_register
@@ -241,7 +247,11 @@ architecture behavioral of processor is
                 memread_out_control => control_memread_ex,
                 memwrite_out_control => control_memwrite_ex,
                 alu_src_out_control => control_alu_src_ex,
-                alu_op_out_control => control_alu_op_ex
+                alu_op_out_control => control_alu_op_ex,
+
+                -- AUIPC
+                auipc_in_control  => '0' when hazard_mux = '1' else control_auipc,
+                auipc_out_control => control_auipc_ex
             );
         
         -- Forwarding is not required for full marks, implement only 1 MUX
@@ -253,9 +263,18 @@ architecture behavioral of processor is
                 Y => alu_in_2
             );
         
-        alu_unit: entity work.alu
+        -- AUIPC
+        mux_ex_a: entity work.MUX_2_1_32bit
             port map(
                 A => register1ex_out,
+                B => pc_base_ex,
+                S => control_auipc_ex,
+                Y => alu_in_1
+            );
+        
+        alu_unit: entity work.alu
+            port map(
+                A => alu_in_1,
                 B => alu_in_2,
                 alu_ctrl => control_alu_op_ex,
                 result => alu_result,

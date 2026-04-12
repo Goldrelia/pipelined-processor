@@ -41,7 +41,11 @@ entity id_ex_register is
         memread_out_control: out std_logic;
         memwrite_out_control: out std_logic;
         alu_src_out_control: out std_logic;
-        alu_op_out_control: out std_logic_vector(4 downto 0)
+        alu_op_out_control: out std_logic_vector(4 downto 0);
+
+        -- AUIPC
+        auipc_in_control  : in  std_logic;
+        auipc_out_control : out std_logic
     );
 end id_ex_register;
 
@@ -65,6 +69,7 @@ architecture behavioural of id_ex_register is
                     branch_type_out_control <= (others => '0');
                     jal_out_control <= '0';
                     jalr_out_control <= '0';
+                    auipc_out_control <= '0';
 
                 elsif rising_edge(clk) THEN
                     if en = '1' then
@@ -83,6 +88,7 @@ architecture behavioural of id_ex_register is
                         branch_type_out_control <= branch_type_in_control;
                         jal_out_control <= jal_in_control;
                         jalr_out_control <= jalr_in_control;
+                        auipc_out_control <= auipc_in_control;
                     end if;
                 end if;
         end process;

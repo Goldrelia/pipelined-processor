@@ -27,6 +27,7 @@ vcom -work work if_id_register.vhd
 vcom -work work id_ex_register.vhd
 vcom -work work ex_mem_register.vhd
 vcom -work work mem_wb_register.vhd
+vcom -work work control_hazard.vhd
 vcom -work work processor.vhd
 
 puts "✓ Compilation complete\n"
