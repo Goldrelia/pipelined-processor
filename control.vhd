@@ -18,8 +18,6 @@ entity control is
         memread  : out std_logic;
         memwrite : out std_logic;
         alu_src  : out std_logic
-        jump : out std_logic;
-        jalr : out std_logic;
     );
 end entity;
 
@@ -37,8 +35,6 @@ begin
         memread  <= '0';
         memwrite <= '0';
         alu_src  <= '0';
-        jump <= '0';
-        jalr <= '0';
 
         case opcode is
             -- R-type
@@ -98,12 +94,12 @@ begin
             -- JAL
             when "1101111" => 
                 regwrite <= '1';
-                jump     <= '1';
+                jal     <= '1';
                 
             -- JALR
             when "1100111" => 
                 regwrite <= '1';
-                jump     <= '1';
+                jal     <= '1';
                 jalr     <= '1';
                 alu_src  <= '1';
                 alu_ctrl <= "00000"; -- Force ALU to ADD (rs1 + imm)
