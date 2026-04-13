@@ -36,16 +36,16 @@ puts "Starting simulation..."
 # TODO: check if good
 vsim -c work.processor
 force /processor/clk 0 0ns, 1 0.5ns -repeat 1ns
-force /processor/reset 1 0ns          -- hold reset HIGH
+force /processor/reset 1 0ns # hold reset HIGH
 
-run 5ns                                -- stabilize clock
+run 5ns # stabilize clock
 
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
 source load_program.tcl
 
-force /processor/reset 0 0ns -- releasr reset
+force /processor/reset 0 0ns # release reset
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
