@@ -123,6 +123,7 @@ architecture behavioral of processor is
     -- Intermediate signals for conditional port map expressions
     signal if_id_reset          : std_logic;
     signal id_ex_reset          : std_logic;
+    signal ex_mem_reset 	: std_logic;
     signal id_ex_memtoreg_in    : std_logic;
     signal id_ex_regwrite_in    : std_logic;
     signal id_ex_branch_in      : std_logic;
@@ -134,11 +135,14 @@ architecture behavioral of processor is
     signal id_ex_alu_src_in     : std_logic;
     signal id_ex_alu_op_in      : std_logic_vector(4 downto 0);
     signal id_ex_auipc_in       : std_logic;
+    signal pc_write_en_hazard : std_logic;
 
     begin
 
-        if_id_reset          <= '1' when branch_taken_ex = '1' else reset;
-        id_ex_reset          <= '1' when branch_taken_ex = '1' else reset;
+        if_id_reset <= reset;
+	id_ex_reset <= reset;
+	ex_mem_reset <= reset;
+        pc_write_en <= '1' when branch_taken_ex = '1' else pc_write_en_hazard;
         id_ex_memtoreg_in    <= '0' when hazard_mux = '1' else control_memtoreg;
         id_ex_regwrite_in    <= '0' when hazard_mux = '1' else control_regwrite;
         id_ex_branch_in      <= '0' when hazard_mux = '1' else control_branch;
@@ -152,6 +156,7 @@ architecture behavioral of processor is
         id_ex_auipc_in       <= '0' when hazard_mux = '1' else control_auipc;
 
         PC_next <= std_logic_vector(unsigned(PC) + 4);
+        
 
         PC_reg: entity work.reg
             port map(
@@ -180,12 +185,12 @@ architecture behavioral of processor is
             );
 
         mux: entity work.MUX_2_1_32bit
-            port map(
-                A => PC_next,
-                B => pc_target_mem,
-                S => pc_taken_mem,
-                Y => mux_out
-            );
+    		port map(
+        		A => PC_next,
+        		B => pc_target_ex,
+       			S => branch_taken_ex,
+        		Y => mux_out
+    		);
         
         if_id_reg: entity work.if_id_register
             port map(
@@ -311,7 +316,7 @@ architecture behavioral of processor is
             );
 
         -- Branch/jump target and condition calculations in EX stage
-        pc_base_ex <= std_logic_vector(signed(ID_EX_PC) - 4);
+        pc_base_ex <= ID_EX_PC;
         branch_condition_ex <=
             '1' when control_branch_type_ex = "000" and register1ex_out = register2ex_out else
             '1' when control_branch_type_ex = "001" and register1ex_out /= register2ex_out else
@@ -330,7 +335,7 @@ architecture behavioral of processor is
         ex_mem_register: entity work.ex_mem_register
             port map(
                 clk => clk,
-                reset => reset,
+                reset => ex_mem_reset,
                 en => '1',
                 alu_result_in => alu_result,
                 alu_zero_in => alu_zero,
@@ -419,9 +424,7 @@ architecture behavioral of processor is
                 decode_inst_reg1 => IF_ID_IR(19 downto 15),
                 decode_inst_reg2 => IF_ID_IR(24 downto 20),
                 ex_inst_dest     => ID_EX_IR(11 downto 7),
-                ex_regwrite      => control_regwrite_ex,      
-                mem_inst_dest    => ID_MEM_IR(11 downto 7),  
-                mem_regwrite     => control_regwrite_mem,      
+                ex_regwrite      => control_regwrite_ex,         
                 pc_write         => pc_write_en,
                 if_id_write      => if_id_write_en,
                 hazard_out       => hazard_mux

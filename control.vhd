@@ -101,7 +101,7 @@ begin
             -- JALR
             when "1100111" => 
                 regwrite <= '1';
-                jal     <= '1';
+                jal     <= '0';
                 jalr     <= '1';
                 alu_src  <= '1';
                 alu_ctrl <= "00000"; -- Force ALU to ADD (rs1 + imm)
