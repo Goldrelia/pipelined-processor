@@ -37,14 +37,17 @@ puts "Starting simulation..."
 # changed 
 # TODO: check if good
 vsim -c work.processor
-force /processor/reset 1 0ns, 0 5ns
 force /processor/clk 0 0ns, 1 0.5ns -repeat 1ns
-run 10ns
+force /processor/reset 1 0ns          -- hold reset HIGH
+
+run 5ns                                -- stabilize clock
 
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
 source load_program.tcl
+
+force /processor/reset 0 0ns -- releasr reset
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
@@ -82,8 +85,6 @@ puts "Output files:"
 puts "  - register_file.txt (32 lines)"
 puts "  - memory.txt (8192 lines)"
 puts ""
-puts "Run verification:"
-puts "  python3 verify_output.py"
 puts "=================================================="
 
 quit -sim
