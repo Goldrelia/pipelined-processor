@@ -13,13 +13,13 @@ vmap work work
 puts "\nCompiling VHDL files..."
 
 # Compile in dependency order
-vcom -2008 -work work adder.vhd
+# vcom -2008 -work work adder.vhd
 vcom -2008 -work work alu.vhd
 vcom -2008 -work work control.vhd
 vcom -2008 -work work generic_register.vhd
 vcom -2008 -work work register.vhd
 vcom -2008 -work work memory.vhd
-vcom -2008 -work work MUX_2_1.vhd
+# vcom -2008 -work work MUX_2_1.vhd
 vcom -2008 -work work MUX_2_1_32bit.vhd
 vcom -2008 -work work register_file.vhd
 vcom -2008 -work work imm_gen.vhd
