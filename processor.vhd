@@ -192,7 +192,7 @@ architecture behavioral of processor is
                 clk    => clk,
                 reset  => if_id_reset,
                 en     => if_id_write_en,
-                pc_in  => PC_next,   -- PC+4 goes into IF/ID
+                pc_in  => PC,   -- PC+4 goes into IF/ID
                 ir_in  => instruction,
                 pc_out => IF_ID_PC,
                 ir_out => IF_ID_IR
