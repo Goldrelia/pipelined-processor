@@ -35,14 +35,14 @@ vsim -c work.processor
 force /processor/clk 0 0, 1 500ps -repeat 1ns
 force /processor/reset 1 0ns
 
-run 5ns # stabilize clock
+run 5ns 
 
 puts "✓ Simulation started\n"
 
 puts "Loading program.txt into instruction memory..."
 source load_program.tcl
 
-force /processor/reset 0 0ns # release reset
+force /processor/reset 0 0ns 
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
