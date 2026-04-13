@@ -115,12 +115,41 @@ architecture behavioral of processor is
     signal hazard_mux : std_logic;
     -- for the hazard mux output
 
-    -- AUIPC
+-- AUIPC
     signal control_auipc    : std_logic;
     signal control_auipc_ex : std_logic;
     signal alu_in_1         : std_logic_vector(31 downto 0);
 
+    -- Intermediate signals for conditional port map expressions
+    signal if_id_reset          : std_logic;
+    signal id_ex_reset          : std_logic;
+    signal id_ex_memtoreg_in    : std_logic;
+    signal id_ex_regwrite_in    : std_logic;
+    signal id_ex_branch_in      : std_logic;
+    signal id_ex_branch_type_in : std_logic_vector(2 downto 0);
+    signal id_ex_jal_in         : std_logic;
+    signal id_ex_jalr_in        : std_logic;
+    signal id_ex_memread_in     : std_logic;
+    signal id_ex_memwrite_in    : std_logic;
+    signal id_ex_alu_src_in     : std_logic;
+    signal id_ex_alu_op_in      : std_logic_vector(4 downto 0);
+    signal id_ex_auipc_in       : std_logic;
+
     begin
+
+        if_id_reset          <= '1' when branch_taken_ex = '1' else reset;
+        id_ex_reset          <= '1' when branch_taken_ex = '1' else reset;
+        id_ex_memtoreg_in    <= '0' when hazard_mux = '1' else control_memtoreg;
+        id_ex_regwrite_in    <= '0' when hazard_mux = '1' else control_regwrite;
+        id_ex_branch_in      <= '0' when hazard_mux = '1' else control_branch;
+        id_ex_branch_type_in <= "000" when hazard_mux = '1' else control_branch_type;
+        id_ex_jal_in         <= '0' when hazard_mux = '1' else control_jal;
+        id_ex_jalr_in        <= '0' when hazard_mux = '1' else control_jalr;
+        id_ex_memread_in     <= '0' when hazard_mux = '1' else control_memread;
+        id_ex_memwrite_in    <= '0' when hazard_mux = '1' else control_memwrite;
+        id_ex_alu_src_in     <= '0' when hazard_mux = '1' else control_alu_src;
+        id_ex_alu_op_in      <= "00000" when hazard_mux = '1' else control_alu_op;
+        id_ex_auipc_in       <= '0' when hazard_mux = '1' else control_auipc;
 
         PC_next <= std_logic_vector(unsigned(PC) + 4);
 
@@ -161,7 +190,7 @@ architecture behavioral of processor is
         if_id_reg: entity work.if_id_register
             port map(
                 clk    => clk,
-                reset  => '1' when branch_taken_ex = '1' else reset,
+                reset  => id_ex_reset,
                 en     => if_id_write_en,
                 pc_in  => PC_next,   -- PC+4 goes into IF/ID
                 ir_in  => instruction,
@@ -212,7 +241,7 @@ architecture behavioral of processor is
         id_ex_register: entity work.id_ex_register
             port map(
                 clk => clk,
-                reset => '1' when branch_taken_ex = '1' else reset,
+                reset  => if_id_reset,
                 en => '1',
                 -- Input ports
                 pc_in => IF_ID_PC,
@@ -227,16 +256,16 @@ architecture behavioral of processor is
                 rs2_out => register2ex_out,
                 ir_out_ext => immex_val,
                 -- Input control signals
-                memtoreg_in_control => '0' when hazard_mux = '1' else control_memtoreg,
-                regwrite_in_control => '0' when hazard_mux = '1' else control_regwrite,
-                branch_in_control => '0' when hazard_mux = '1' else control_branch,
-                branch_type_in_control => "000" when hazard_mux = '1' else control_branch_type,
-                jal_in_control => '0' when hazard_mux = '1' else control_jal,
-                jalr_in_control => '0' when hazard_mux = '1' else control_jalr,
-                memread_in_control => '0' when hazard_mux = '1' else control_memread,
-                memwrite_in_control => '0' when hazard_mux = '1' else control_memwrite,
-                alu_src_in_control => '0' when hazard_mux = '1' else control_alu_src,
-                alu_op_in_control => "00000" when hazard_mux = '1' else control_alu_op,
+                memtoreg_in_control    => id_ex_memtoreg_in,
+                regwrite_in_control    => id_ex_regwrite_in,
+                branch_in_control      => id_ex_branch_in,
+                branch_type_in_control => id_ex_branch_type_in,
+                jal_in_control         => id_ex_jal_in,
+                jalr_in_control        => id_ex_jalr_in,
+                memread_in_control     => id_ex_memread_in,
+                memwrite_in_control    => id_ex_memwrite_in,
+                alu_src_in_control     => id_ex_alu_src_in,
+                alu_op_in_control      => id_ex_alu_op_in,
                 -- Output control signals
                 memtoreg_out_control => control_memtoreg_ex,
                 regwrite_out_control => control_regwrite_ex,
@@ -250,7 +279,7 @@ architecture behavioral of processor is
                 alu_op_out_control => control_alu_op_ex,
 
                 -- AUIPC
-                auipc_in_control  => '0' when hazard_mux = '1' else control_auipc,
+                auipc_in_control  => id_ex_auipc_in,
                 auipc_out_control => control_auipc_ex
             );
         
