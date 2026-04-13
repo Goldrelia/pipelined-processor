@@ -190,7 +190,7 @@ architecture behavioral of processor is
         if_id_reg: entity work.if_id_register
             port map(
                 clk    => clk,
-                reset  => id_ex_reset,
+                reset  => if_id_reset,
                 en     => if_id_write_en,
                 pc_in  => PC_next,   -- PC+4 goes into IF/ID
                 ir_in  => instruction,
@@ -241,7 +241,7 @@ architecture behavioral of processor is
         id_ex_register: entity work.id_ex_register
             port map(
                 clk => clk,
-                reset  => if_id_reset,
+                reset  => id_ex_reset,
                 en => '1',
                 -- Input ports
                 pc_in => IF_ID_PC,
