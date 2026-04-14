@@ -161,7 +161,7 @@ architecture behavioral of processor is
 	id_ex_reset <= reset;
 	ex_mem_reset <= reset;
         -- Stall PC/IF on hazard; always advance PC on a taken branch/jump in EX
-        pc_write_en   <= branch_taken_ex or (hazard_mux = '0');
+        pc_write_en   <= branch_taken_ex or (not hazard_mux);
         -- On branch/jump taken, overwrite IF/ID with bubble (must still clock in)
         if_id_write_en <= (not hazard_mux) or branch_taken_ex;
         id_ex_memtoreg_in    <= '0' when bubble_id_ex = '1' else control_memtoreg;
