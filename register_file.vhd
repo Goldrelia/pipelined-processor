@@ -3,7 +3,7 @@ USE ieee.std_logic_1164.all;
 USE ieee.numeric_std.all;
 
 -- 32x32-bit register file for RISC-V RV32I
--- Two asynchronous read ports (rs1, rs2) ?> read combinationally in ID stage
+-- Two asynchronous read ports (rs1, rs2) —> read combinationally in ID stage
 -- One synchronous write port (rd) -> written on rising edge in WB stage
 -- x0 is hardwired to 0x00000000: writes to x0 are silently ignored,
 -- reads from x0 always return 0 regardless of stored value
@@ -12,14 +12,14 @@ ENTITY register_file IS
     PORT (
         clock    : IN  STD_LOGIC;
 
-        -- Read ports (ID stage) ? asynchronous, results available same cycle
+        -- Read ports (ID stage) — asynchronous, results available same cycle
         -- since want outputs immediately
         rs1_addr : IN  INTEGER RANGE 0 TO 31;
         rs2_addr : IN  INTEGER RANGE 0 TO 31;
         rs1_data : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
         rs2_data : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-        -- Write port (WB stage) ? synchronous, write on rising clock edge
+        -- Write port (WB stage) — synchronous, write on rising clock edge
         -- since do not want the values in the register file to change mid-cycle
         -- while another instructions is already in the middle of reading
         rd_addr  : IN  INTEGER RANGE 0 TO 31;
@@ -37,7 +37,7 @@ ARCHITECTURE rtl OF register_file IS
 BEGIN
 
     -- Synchronous write (WB stage)
-    -- x0 is never written ? any instruction with rd = x0 is a no-op write
+    -- x0 is never written — any instruction with rd = x0 is a no-op write
     write_proc : PROCESS(clock)
     BEGIN
         IF rising_edge(clock) THEN
