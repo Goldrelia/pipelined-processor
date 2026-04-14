@@ -39,7 +39,6 @@ run 5ns
 
 puts "✓ Simulation started\n"
 
-puts "Loading program.txt into instruction memory..."
 source load_program.tcl
 
 force /processor/reset 0 0ns 

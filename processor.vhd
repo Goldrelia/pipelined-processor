@@ -135,25 +135,46 @@ architecture behavioral of processor is
     signal id_ex_alu_src_in     : std_logic;
     signal id_ex_alu_op_in      : std_logic_vector(4 downto 0);
     signal id_ex_auipc_in       : std_logic;
-    signal pc_write_en_hazard : std_logic;
+    -- IF/ID stores instruction address; link writes need PC+4 of that instruction
+    signal wb_link_pc_plus4   : std_logic_vector(31 downto 0);
+    -- addi x0, x0, 0 bubble for EX when stalling ID (per handout)
+    constant BUBBLE_IR : std_logic_vector(31 downto 0) := x"00000013";
+    signal id_ex_ir_in    : std_logic_vector(31 downto 0);
+    signal id_ex_imm_in  : std_logic_vector(31 downto 0);
+    signal id_ex_rs1_in  : std_logic_vector(31 downto 0);
+    signal id_ex_rs2_in  : std_logic_vector(31 downto 0);
+    -- Hazard stall or taken branch/jump in EX: kill wrong-path instr in ID/EX
+    signal bubble_id_ex  : std_logic;
+    signal if_id_ir_in   : std_logic_vector(31 downto 0);
+    signal if_id_pc_in   : std_logic_vector(31 downto 0);
 
     begin
+
+        wb_link_pc_plus4 <= std_logic_vector(unsigned(pc_plus4_wb) + 4);
+
+        id_ex_ir_in   <= BUBBLE_IR when bubble_id_ex = '1' else IF_ID_IR;
+        id_ex_imm_in  <= (others => '0') when bubble_id_ex = '1' else imm_value;
+        id_ex_rs1_in  <= (others => '0') when bubble_id_ex = '1' else reg1_out;
+        id_ex_rs2_in  <= (others => '0') when bubble_id_ex = '1' else reg2_out;
 
         if_id_reset <= reset;
 	id_ex_reset <= reset;
 	ex_mem_reset <= reset;
-        pc_write_en <= '1' when branch_taken_ex = '1' else pc_write_en_hazard;
-        id_ex_memtoreg_in    <= '0' when hazard_mux = '1' else control_memtoreg;
-        id_ex_regwrite_in    <= '0' when hazard_mux = '1' else control_regwrite;
-        id_ex_branch_in      <= '0' when hazard_mux = '1' else control_branch;
-        id_ex_branch_type_in <= "000" when hazard_mux = '1' else control_branch_type;
-        id_ex_jal_in         <= '0' when hazard_mux = '1' else control_jal;
-        id_ex_jalr_in        <= '0' when hazard_mux = '1' else control_jalr;
-        id_ex_memread_in     <= '0' when hazard_mux = '1' else control_memread;
-        id_ex_memwrite_in    <= '0' when hazard_mux = '1' else control_memwrite;
-        id_ex_alu_src_in     <= '0' when hazard_mux = '1' else control_alu_src;
-        id_ex_alu_op_in      <= "00000" when hazard_mux = '1' else control_alu_op;
-        id_ex_auipc_in       <= '0' when hazard_mux = '1' else control_auipc;
+        -- Stall PC/IF on hazard; always advance PC on a taken branch/jump in EX
+        pc_write_en   <= branch_taken_ex or (hazard_mux = '0');
+        -- On branch/jump taken, overwrite IF/ID with bubble (must still clock in)
+        if_id_write_en <= (not hazard_mux) or branch_taken_ex;
+        id_ex_memtoreg_in    <= '0' when bubble_id_ex = '1' else control_memtoreg;
+        id_ex_regwrite_in    <= '0' when bubble_id_ex = '1' else control_regwrite;
+        id_ex_branch_in      <= '0' when bubble_id_ex = '1' else control_branch;
+        id_ex_branch_type_in <= "000" when bubble_id_ex = '1' else control_branch_type;
+        id_ex_jal_in         <= '0' when bubble_id_ex = '1' else control_jal;
+        id_ex_jalr_in        <= '0' when bubble_id_ex = '1' else control_jalr;
+        id_ex_memread_in     <= '0' when bubble_id_ex = '1' else control_memread;
+        id_ex_memwrite_in    <= '0' when bubble_id_ex = '1' else control_memwrite;
+        id_ex_alu_src_in     <= '0' when bubble_id_ex = '1' else control_alu_src;
+        id_ex_alu_op_in      <= "00000" when bubble_id_ex = '1' else control_alu_op;
+        id_ex_auipc_in       <= '0' when bubble_id_ex = '1' else control_auipc;
 
         PC_next <= std_logic_vector(unsigned(PC) + 4);
         
@@ -167,8 +188,8 @@ architecture behavioral of processor is
                 data_out => PC
             );
 
-        -- Compute instruction address
-        instr_addr <= to_integer(unsigned(PC_next))/4;
+        -- Fetch word at current PC (PC_next would skip address 0 when PC = 0)
+        instr_addr <= to_integer(unsigned(PC)) / 4;
 
         instruction_mem: entity work.memory
             generic map(
@@ -191,14 +212,18 @@ architecture behavioral of processor is
        			S => branch_taken_ex,
         		Y => mux_out
     		);
+
+        -- Squash wrong-path fetch after branch/jump resolves in EX
+        if_id_ir_in <= BUBBLE_IR when branch_taken_ex = '1' else instruction;
+        if_id_pc_in <= PC;
         
         if_id_reg: entity work.if_id_register
             port map(
                 clk    => clk,
                 reset  => if_id_reset,
                 en     => if_id_write_en,
-                pc_in  => PC_next,   -- PC+4 goes into IF/ID
-                ir_in  => instruction,
+                pc_in  => if_id_pc_in,
+                ir_in  => if_id_ir_in,
                 pc_out => IF_ID_PC,
                 ir_out => IF_ID_IR
             );
@@ -250,10 +275,10 @@ architecture behavioral of processor is
                 en => '1',
                 -- Input ports
                 pc_in => IF_ID_PC,
-                ir_in => IF_ID_IR,
-                ir_in_ext => imm_value,
-                rs1_in => reg1_out,
-                rs2_in => reg2_out,
+                ir_in => id_ex_ir_in,
+                ir_in_ext => id_ex_imm_in,
+                rs1_in => id_ex_rs1_in,
+                rs2_in => id_ex_rs2_in,
                 -- Output ports
                 pc_out => ID_EX_PC,
                 ir_out => ID_EX_IR,
@@ -322,8 +347,11 @@ architecture behavioral of processor is
             '1' when control_branch_type_ex = "001" and register1ex_out /= register2ex_out else
             '1' when control_branch_type_ex = "100" and signed(register1ex_out) < signed(register2ex_out) else
             '1' when control_branch_type_ex = "101" and signed(register1ex_out) >= signed(register2ex_out) else
+            '1' when control_branch_type_ex = "110" and unsigned(register1ex_out) < unsigned(register2ex_out) else
+            '1' when control_branch_type_ex = "111" and unsigned(register1ex_out) >= unsigned(register2ex_out) else
             '0';
         branch_taken_ex <= (control_branch_ex and branch_condition_ex) or control_jal_ex or control_jalr_ex;
+        bubble_id_ex    <= hazard_mux or branch_taken_ex;
         link_ex <= control_jal_ex or control_jalr_ex;
         jal_target_ex <= std_logic_vector(signed(pc_base_ex) + signed(immex_val));
         jalr_target_raw_ex <= std_logic_vector(signed(register1ex_out) + signed(immex_val));
@@ -414,7 +442,7 @@ architecture behavioral of processor is
         wb_mux1: entity work.MUX_2_1_32bit
             port map(
                 A => alu_mem_wb,
-                B => pc_plus4_wb,
+                B => wb_link_pc_plus4,
                 S => control_link_wb,
                 Y => wb_data
             );
@@ -424,9 +452,11 @@ architecture behavioral of processor is
                 decode_inst_reg1 => IF_ID_IR(19 downto 15),
                 decode_inst_reg2 => IF_ID_IR(24 downto 20),
                 ex_inst_dest     => ID_EX_IR(11 downto 7),
-                ex_regwrite      => control_regwrite_ex,         
-                pc_write         => pc_write_en,
-                if_id_write      => if_id_write_en,
+                ex_regwrite      => control_regwrite_ex,
+                mem_inst_dest    => ID_MEM_IR(11 downto 7),
+                mem_regwrite     => control_regwrite_mem,
+                wb_inst_dest     => ID_WB_IR(11 downto 7),
+                wb_regwrite      => control_regwrite_wb,
                 hazard_out       => hazard_mux
             );
 
