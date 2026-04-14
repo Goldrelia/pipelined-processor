@@ -60,11 +60,7 @@ begin
             -- =======================
             when "01000" => 
                 rd <= (others=>'0'); 
-                if rs1_signed < rs2_signed_or_imm then rd(0) <= '1'; end if;             -- SLT / SLTI
-
-            when "10000" =>
-                rd <= (others=>'0');
-                if rs1_unsigned < rs2_unsigned_or_imm then rd(0) <= '1'; end if;        -- SLTU / SLTIU
+                if rs1_signed < rs2_signed_or_imm then rd(0) <= '1'; end if;             -- SLTI
 
             -- =======================
             -- U-type instructions
