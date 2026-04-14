@@ -51,20 +51,8 @@ begin
             		elsif funct7 = "0000001" then
                 		alu_ctrl <= "00010";  -- MUL
             		end if;
-                    when "100" =>
-                        if funct7 = "0000000" then
-                            alu_ctrl <= "01111";                             -- XOR
-                        end if;
                     when "110" => alu_ctrl <= "00011";                     -- OR
                     when "111" => alu_ctrl <= "00100";                     -- AND
-                    when "010" =>
-                        if funct7 = "0000000" then
-                            alu_ctrl <= "01000";                             -- SLT
-                        end if;
-                    when "011" =>
-                        if funct7 = "0000000" then
-                            alu_ctrl <= "10000";                             -- SLTU
-                        end if;
                     when "001" => alu_ctrl <= "00101";                     -- SLL
                     when "101" =>
                         if funct7 = "0000000" then alu_ctrl <= "00110";    -- SRL
@@ -79,18 +67,10 @@ begin
                 alu_src  <= '1';
                 case funct3 is
                     when "000" => alu_ctrl <= "00000";   -- ADDI
-                    when "001" => alu_ctrl <= "00101";   -- SLLI
-                    when "010" => alu_ctrl <= "01000";   -- SLTI
-                    when "011" => alu_ctrl <= "10000";   -- SLTIU (unsigned compare)
                     when "100" => alu_ctrl <= "01111";   -- XORI
-                    when "101" =>
-                        if funct7 = "0100000" then
-                            alu_ctrl <= "00111";          -- SRAI
-                        else
-                            alu_ctrl <= "00110";          -- SRLI
-                        end if;
                     when "110" => alu_ctrl <= "00011";   -- ORI
                     when "111" => alu_ctrl <= "00100";   -- ANDI
+                    when "010" => alu_ctrl <= "01000";   -- SLTI
                     when others => alu_ctrl <= (others=>'0');
                 end case;
 
