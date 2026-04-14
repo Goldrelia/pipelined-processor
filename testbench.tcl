@@ -1,6 +1,6 @@
 # Complete testbench script for RISC-V pipelined processor
-# This script compiles, simulates, and dumps output files
-# NOTE: program.txt is loaded into instruction memory via TCL (load_program.do)
+# Compiles, simulates, loads program.txt into instruction memory, dumps outputs.
+# Single-file submission: all TCL steps are in this file.
 
 puts "=================================================="
 puts "RISC-V Pipelined Processor Testbench"
@@ -35,13 +35,41 @@ vsim -c work.processor
 force /processor/clk 0 0, 1 500ps -repeat 1ns
 force /processor/reset 1 0ns
 
-run 5ns 
+run 5ns
 
 puts "✓ Simulation started\n"
 
-source load_program.tcl
+# --- Load program.txt into instruction memory (mem load; no separate TCL file) ---
+proc load_program {} {
+    set fn program.txt
+    if {![file isfile $fn]} {
+        error "load_program: cannot find $fn (cwd: [pwd])"
+    }
 
-force /processor/reset 0 0ns 
+    set path /processor/instruction_mem/ram_block
+    puts "Loading [file normalize $fn] into $path ..."
+
+    # One 32-bit binary word per line (ASCII '0'/'1'), ascending address from 0.
+    mem load -format bin -infile $fn $path
+
+    set f [open $fn r]
+    set n 0
+    while {[gets $f line] >= 0} {
+        set line [string trim $line]
+        if {$line ne ""} {
+            incr n
+            if {$n <= 20} {
+                puts "  word [expr {$n - 1}]: $line"
+            }
+        }
+    }
+    close $f
+    puts "Loaded $n instruction word(s)."
+}
+
+load_program
+
+force /processor/reset 0 0ns
 
 puts "Running for 10,000 cycles..."
 run 10000 ns
