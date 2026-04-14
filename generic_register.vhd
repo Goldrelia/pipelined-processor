@@ -16,13 +16,13 @@ end generic_register;
 
 architecture behaviour of generic_register is
 begin
-    process(clk, reset)   -- add reset to sensitivity list
-        begin
-    	    if reset = '1' then          -- async reset first
-                q <= (others=>'0');
+    process(clk, reset)
+    begin
+    	if reset = '1' then
+            q <= (others=>'0');
         elsif rising_edge(clk) then
             if en='1' then
-            q <= d;
+                q <= d;
             end if;
         end if;
     end process;
