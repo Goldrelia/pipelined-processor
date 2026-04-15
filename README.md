@@ -1,14 +1,13 @@
 # pipelined-processor
 
-Files to delete?
+Project by Aurelia Bouliane, Yasmine Drissi, Tayba Jusab and Matthew Liogas.
 
-branch_logic.vhd
-adder.vhd
-MUX_2_1.vhd
-testbench.vhd
+This project outlines a RISC-V processor with a 5-stage pipeline (Fetch, Decode, Execute, Memory, Writeback) and supports hazard detection.
 
-Reasons:
-branch_logic.vhd: we handle branch conditions directly in processor.vhd with the branch_condition_ex signal, so this component is never instantiated
-adder.vhd: we use the MUX_2_1_32bit and compute additions inline with std_logic_vector(unsigned(PC) + 4), never instantiate this
-MUX_2_1.vhd: we only ever use MUX_2_1_32bit, never the 1-bit version
-testbench.vhd: program loading is done via TCL, this file is never compiled or used
+## How to run a simulation
+### 1. Upload Program
+In `program.txt`, copy paste binary machine code corresponding to the program to test with. 
+### 2. Run testbench in ModelSim
+In ModelSim, open the root folder of this repository. Then, run the command `do testbench.tcl` at the bottom of the screen to automatically compile all VHDL files, read `program.txt` into instruction memory, and run the simulation. 
+### 3. View results
+Results will be generated in the output text files `register_file.txt` and `memory.txt`.
