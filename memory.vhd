@@ -27,7 +27,7 @@ END memory;
 
 ARCHITECTURE rtl OF memory IS
 	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
-	SIGNAL ram_block: MEM;
+	SIGNAL ram_block: MEM := (others => (others => '0'));
 	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
 	SIGNAL write_waitreq_reg: STD_LOGIC := '1';
 	SIGNAL read_waitreq_reg: STD_LOGIC := '1';
@@ -40,10 +40,9 @@ BEGIN
 			IF (memwrite = '1') THEN
 				ram_block(address) <= writedata;
 			END IF;
-			read_address_reg <= address;
 		END IF;
 	END PROCESS;
-	readdata <= ram_block(read_address_reg);
+	readdata <= ram_block(address);
 
 
 	--The waitrequest signal is used to vary response time in simulation

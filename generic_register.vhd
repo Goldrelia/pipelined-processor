@@ -16,13 +16,13 @@ end generic_register;
 
 architecture behaviour of generic_register is
 begin
-    process(clk)
+    process(clk, reset)
     begin
-        if rising_edge(clk) then
-            if reset='1' then
-                q<=(others=>'0'); --reset and clear all bits to 0
-            elsif en='1' then
-                q<=d; --new data
+    	if reset = '1' then
+            q <= (others=>'0');
+        elsif rising_edge(clk) then
+            if en='1' then
+                q <= d;
             end if;
         end if;
     end process;
