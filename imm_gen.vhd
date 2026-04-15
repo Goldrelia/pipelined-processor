@@ -3,7 +3,7 @@ use IEEE.std_logic_1164.all;
 
 entity imm_gen is
     port(
-        instruction: in std_logic_vector(31 downto 0);
+        instruction: in std_logic_vector(31 downto 0); --takes entire instruction in order to determine which type it is
         imm_out: out std_logic_vector(31 downto 0)
     );
 end imm_gen;
@@ -14,6 +14,7 @@ begin
     opcode <= instruction(6 downto 0);
     process(instruction,opcode)
     begin
+        --initialize output
         imm_out<=(others=>'0');
         case opcode is
             -- I-type: ALU immediates, LW, JALR
