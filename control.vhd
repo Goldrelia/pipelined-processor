@@ -4,11 +4,15 @@ use IEEE.numeric_std.all;
 
 entity control is
     port(
+        --instruction fields from IF/ID register
         opcode   : in std_logic_vector(6 downto 0);
         funct3   : in std_logic_vector(2 downto 0);
         funct7   : in std_logic_vector(6 downto 0);
+        
+        --ALU control signal to execute stage
         alu_ctrl : out std_logic_vector(4 downto 0);
 
+        --datapath control signals
         memtoreg : out std_logic;
         regwrite : out std_logic;
         branch   : out std_logic;
@@ -26,6 +30,7 @@ architecture behavioral of control is
 begin
     process(opcode, funct3, funct7)
     begin
+        --initialize all control signals
         alu_ctrl <= (others=>'0');
         memtoreg <= '0';
         regwrite <= '0';
@@ -38,6 +43,7 @@ begin
         alu_src  <= '0';
         auipc <= '0';
 
+        --decode the opcode to find instruction type
         case opcode is
             -- R-type
             when "0110011" =>
