@@ -12,6 +12,7 @@ end MUX_2_1_32bit;
 
 architecture behavioral of MUX_2_1_32bit is
 BEGIN
+    --implement basic MUX behaviour
     with S select
         Y <= A when '0',
              B when '1',
